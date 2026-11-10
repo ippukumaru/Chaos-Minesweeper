@@ -43,138 +43,78 @@
       border: 1px solid rgba(0, 240, 255, 0.3);
       padding: 12px 20px;
       border-radius: 8px;
-      margin-bottom: 20px;
+      margin-bottom: 15px;
       display: flex;
-      gap: 20px;
+      gap: 30px;
       box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
     }
 
-    .stat-box {
-      text-align: center;
-    }
+    .stat-box { text-align: center; }
+    .stat-label { font-size: 0.75rem; color: #94a3b8; }
+    .stat-value { font-size: 1.4rem; font-weight: bold; color: #fff; }
 
-    .stat-label {
-      font-size: 0.75rem;
-      color: #94a3b8;
-    }
-
-    .stat-value {
-      font-size: 1.4rem;
-      font-weight: bold;
-      color: #fff;
-    }
-
-    .controls {
-      margin-bottom: 15px;
-      display: flex;
-      gap: 10px;
-    }
+    .controls { margin-bottom: 15px; }
 
     button {
       background: linear-gradient(135deg, #ff0055, #ff5500);
       border: none;
       color: white;
-      padding: 8px 16px;
-      border-radius: 4px;
+      padding: 10px 20px;
+      border-radius: 6px;
       font-weight: bold;
       cursor: pointer;
       box-shadow: 0 4px 10px rgba(255, 0, 85, 0.4);
       transition: transform 0.1s, filter 0.2s;
     }
 
-    button:hover {
-      filter: brightness(1.2);
-    }
+    button:hover { filter: brightness(1.2); }
+    button:active { transform: scale(0.95); }
 
-    button:active {
-      transform: scale(0.95);
-    }
-
-    /* ボードと正三角形グリッドのCSS表現 */
     #board-container {
-      position: relative;
       background: var(--panel);
-      padding: 30px;
+      padding: 20px;
       border-radius: 12px;
       border: 1px solid rgba(255, 255, 255, 0.1);
       box-shadow: 0 10px 30px rgba(0,0,0,0.8);
-      overflow: auto;
       max-width: 100%;
+      overflow: auto;
     }
 
-    #board {
-      position: relative;
-      margin: 0 auto;
-    }
-
-    /* 正三角形セル */
-    .tri-cell {
-      position: absolute;
-      width: 0;
-      height: 0;
+    /* SVGスタイリング */
+    svg polygon {
+      stroke: #0d0f18;
+      stroke-width: 1.5;
       cursor: pointer;
-      transition: filter 0.15s, transform 0.2s;
+      transition: fill 0.15s;
     }
 
-    /* 上向き三角形 */
-    .tri-up {
-      border-left: 26px solid transparent;
-      border-right: 26px solid transparent;
-      border-bottom: 45px solid #2a2e45;
-    }
+    /* 上向き/下向きの未開示カラー */
+    polygon.unrevealed-up { fill: #2a2e45; }
+    polygon.unrevealed-down { fill: #1f2338; }
+    polygon:hover { fill: #3d4363 !important; }
 
-    /* 下向き三角形 */
-    .tri-down {
-      border-left: 26px solid transparent;
-      border-right: 26px solid transparent;
-      border-top: 45px solid #1f2338;
-    }
+    /* 開封済み */
+    polygon.revealed { fill: #0f1322 !important; }
+    polygon.mine-revealed { fill: #4a0d21 !important; }
 
-    .tri-cell:hover {
-      filter: brightness(1.4);
-    }
-
-    /* セル内のテキスト表示（絶対配置で中央寄せ） */
-    .cell-label {
-      position: absolute;
-      width: 40px;
-      text-align: center;
+    /* セル内のテキスト（数値 / アイコン） */
+    text.cell-text {
       font-weight: bold;
-      font-size: 14px;
+      font-size: 15px;
       pointer-events: none;
-      transform: translate(-50%, -50%);
-      left: 0;
-      z-index: 2;
+      text-anchor: middle;
+      dominant-baseline: central;
     }
 
-    .tri-up .cell-label {
-      top: 30px;
-    }
+    .num-0 { fill: #4a5568; }
+    .num-1 { fill: #6366f1; }
+    .num-2 { fill: #10b981; }
+    .num-3 { fill: #ef4444; }
+    .num-4 { fill: #f59e0b; }
+    .num-5 { fill: #ec4899; }
+    .num-6 { fill: #8b5cf6; }
+    .num-error { fill: #00f0ff; filter: drop-shadow(0 0 3px #00f0ff); }
 
-    .tri-down .cell-label {
-      top: -30px;
-    }
-
-    /* 開封済みセルのスタイル */
-    .tri-cell.revealed.tri-up {
-      border-bottom-color: #0f1322 !important;
-    }
-    .tri-cell.revealed.tri-down {
-      border-top-color: #0c0f1d !important;
-    }
-
-    /* 色指定 */
-    .num-0 { color: #4a5568; }
-    .num-1 { color: #6366f1; }
-    .num-2 { color: #10b981; }
-    .num-3 { color: #ef4444; }
-    .num-4 { color: #f59e0b; }
-    .num-5 { color: #ec4899; }
-    .num-6 { color: #8b5cf6; }
-    .num-error { color: #00f0ff; text-shadow: 0 0 5px #00f0ff; } /* 誤差つき表示 */
-    .mine-icon { color: #ff0055; text-shadow: 0 0 8px #ff0055; }
-
-    /* メッセージ領域 */
     #status-msg {
       margin-top: 15px;
       font-size: 1.1rem;
@@ -184,7 +124,7 @@
     }
 
     .rules {
-      margin-top: 25px;
+      margin-top: 20px;
       max-width: 600px;
       background: rgba(255, 255, 255, 0.03);
       padding: 15px 20px;
@@ -192,11 +132,6 @@
       font-size: 0.85rem;
       line-height: 1.6;
       color: #cbd5e1;
-    }
-
-    .rules ul {
-      margin: 5px 0 0 20px;
-      padding: 0;
     }
   </style>
 </head>
@@ -220,17 +155,17 @@
   </div>
 
   <div id="board-container">
-    <div id="board"></div>
+    <svg id="board-svg"></svg>
   </div>
 
   <div id="status-msg"></div>
 
   <div class="rules">
-    <strong>🌀 狂気のカオスルール:</strong>
+    <strong>🌀 カオスルール & 三角幾何学:</strong>
     <ul>
-      <li><strong>12マス判定</strong>: 正三角形の周囲「辺3マス ＋ 頂点9マス」の計12マスを索敵対象とします。</li>
-      <li><strong>±1誤差表示 (30%の確率)</strong>: 数字が表示される際、30%の確率で実際の爆弾数から ±1 ズレた「偽数値」が表示されます（水色に発光）。</li>
-      <li><strong>動く地雷 (5秒周期)</strong>: 5秒ごとに未開封マスの地雷が1つ、こっそり隣のマスへワープ移動します。</li>
+      <li><strong>12マス判定</strong>: 正三角形の周囲「辺3マス ＋ 頂点9マス」の計12マスをカウント対象とします。</li>
+      <li><strong>±1誤差表示 (30%の確率)</strong>: 数字表示時、30%の確率で±1ズレた偽数値が表示されます（水色発光）。</li>
+      <li><strong>動く地雷 (5秒周期)</strong>: 5秒ごとに未開封マスの地雷が1つ裏でテレポートします。</li>
       <li><strong>操作</strong>: 左クリックで開封 / 右クリックでフラグ。</li>
     </ul>
   </div>
@@ -238,29 +173,47 @@
   <script>
     const ROWS = 9;
     const COLS = 13;
-    const MINE_COUNT = 15;
-    const SIDE = 26; // 半分サイズ
-    const HEIGHT = 45; // 高さ
+    const MINE_COUNT = 14;
+    const SIDE = 54; // 三角形の1辺の長さ
+    const HEIGHT = SIDE * (Math.sqrt(3) / 2); // 頂点の高さ
 
     let grid = [];
     let gameOver = false;
     let shiftInterval = null;
 
-    // 12方向の相対座標算出（正三角形の特殊隣接判定）
+    // 幾何学的に正しい頂点座標の計算
+    function getTriangleVertices(r, c) {
+      const isUp = (r + c) % 2 === 0;
+      const xBase = c * (SIDE / 2);
+      const yBase = r * HEIGHT;
+
+      let p1, p2, p3, center;
+
+      if (isUp) {
+        p1 = { x: xBase + SIDE / 2, y: yBase };
+        p2 = { x: xBase + SIDE, y: yBase + HEIGHT };
+        p3 = { x: xBase, y: yBase + HEIGHT };
+        center = { x: xBase + SIDE / 2, y: yBase + (HEIGHT * 2 / 3) };
+      } else {
+        p1 = { x: xBase, y: yBase };
+        p2 = { x: xBase + SIDE, y: yBase };
+        p3 = { x: xBase + SIDE / 2, y: yBase + HEIGHT };
+        center = { x: xBase + SIDE / 2, y: yBase + (HEIGHT / 3) };
+      }
+
+      return { points: `${p1.x},${p1.y} ${p2.x},${p2.y} ${p3.x},${p3.y}`, center, isUp };
+    }
+
+    // 周囲12マスの正確な抽出
     function get12Neighbors(r, c) {
       const isUp = (r + c) % 2 === 0;
       let neighbors = [];
 
-      // 1. 辺共有 (3方向)
-      neighbors.push([r, c - 1]);
-      neighbors.push([r, c + 1]);
-      if (isUp) {
-        neighbors.push([r + 1, c]);
-      } else {
-        neighbors.push([r - 1, c]);
-      }
+      // 辺共有 (3マス)
+      neighbors.push([r, c - 1], [r, c + 1]);
+      neighbors.push(isUp ? [r + 1, c] : [r - 1, c]);
 
-      // 2. 頂点共有 (9方向)
+      // 頂点共有 (9マス)
       if (isUp) {
         neighbors.push([r - 1, c - 1], [r - 1, c], [r - 1, c + 1]);
         neighbors.push([r, c - 2], [r, c + 2]);
@@ -273,7 +226,6 @@
         neighbors.push([r - 2, c]);
       }
 
-      // 盤面内に収まるものだけを抽出
       return neighbors.filter(([nr, nc]) => nr >= 0 && nr < ROWS && nc >= 0 && nc < COLS);
     }
 
@@ -283,18 +235,25 @@
       document.getElementById('status-msg').textContent = '';
       if (shiftInterval) clearInterval(shiftInterval);
 
-      // グリッド初期化
-      grid = [];
-      const board = document.getElementById('board');
-      board.innerHTML = '';
-      board.style.width = `${COLS * SIDE + SIDE}px`; board.style.height = `${ROWS * (HEIGHT * 0.85) + 20}px`;
+      // SVG領域の設定
+      const svg = document.getElementById('board-svg');
+      const totalWidth = (COLS + 1) * (SIDE / 2);
+      const totalHeight = ROWS * HEIGHT;
+      svg.setAttribute('width', totalWidth);
+      svg.setAttribute('height', totalHeight);
+      svg.innerHTML = '';
 
+      // データ構造の作成
+      grid = [];
       for (let r = 0; r < ROWS; r++) {
         grid[r] = [];
         for (let c = 0; c < COLS; c++) {
+          const geo = getTriangleVertices(r, c);
           grid[r][c] = {
             r, c,
-            isUp: (r + c) % 2 === 0,
+            isUp: geo.isUp,
+            points: geo.points,
+            center: geo.center,
             hasMine: false,
             revealed: false,
             flagged: false,
@@ -316,46 +275,66 @@
       }
 
       document.getElementById('mine-count').textContent = MINE_COUNT;
-
-      // 描画
       renderBoard();
 
-      // 5秒ごとに地雷が裏でカサカサ動くタイマー発動
+      // 5秒周期の地雷テレポート
       shiftInterval = setInterval(shiftRandomMine, 5000);
     }
 
     function renderBoard() {
-      const board = document.getElementById('board');
-      board.innerHTML = '';
+      const svg = document.getElementById('board-svg');
+      svg.innerHTML = '';
 
       for (let r = 0; r < ROWS; r++) {
         for (let c = 0; c < COLS; c++) {
           const cell = grid[r][c];
-          const div = document.createElement('div');
-          
-          div.className = `tri-cell ${cell.isUp ? 'tri-up' : 'tri-down'}`; if (cell.revealed) div.classList.add('revealed');  // 座標計算（正三角形の敷き詰め） const posX = c * SIDE; const posY = r * (HEIGHT * 0.82); div.style.left = `${posX}px`;
-          div.style.top = `${posY}px`;  // ラベル（数字/爆弾/フラグ） const label = document.createElement('span'); label.className = 'cell-label';  if (cell.revealed) { if (cell.hasMine) { label.textContent = '💥'; label.classList.add('mine-icon'); } else { label.textContent = cell.displayVal; if (cell.isLiar) { label.classList.add('num-error'); } else { label.classList.add(`num-${Math.min(cell.displayVal, 6)}`);
-              }
-            }
-          } else if (cell.flagged) {
-            label.textContent = '🚩';
+
+          // ポリゴン描画
+          const poly = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+          poly.setAttribute('points', cell.points);
+
+          if (cell.revealed) {
+            poly.setAttribute('class', cell.hasMine ? 'revealed mine-revealed' : 'revealed');
+          } else {
+            poly.setAttribute('class', cell.isUp ? 'unrevealed-up' : 'unrevealed-down');
           }
 
-          div.appendChild(label);
-
-          // イベント登録
-          div.addEventListener('click', () => revealCell(r, c));
-          div.addEventListener('contextmenu', (e) => {
+          poly.addEventListener('click', () => revealCell(r, c));
+          poly.addEventListener('contextmenu', (e) => {
             e.preventDefault();
             toggleFlag(r, c);
           });
 
-          board.appendChild(div);
+          svg.appendChild(poly);
+
+          // テキスト描画（数字 / アイコン）
+          if (cell.revealed || cell.flagged) {
+            const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            text.setAttribute('x', cell.center.x);
+            text.setAttribute('y', cell.center.y);
+            text.setAttribute('class', 'cell-text');
+
+            if (cell.revealed) {
+              if (cell.hasMine) {
+                text.textContent = '💥';
+              } else {
+                text.textContent = cell.displayVal;
+                if (cell.isLiar) {
+                  text.classList.add('num-error');
+                } else {
+                  text.classList.add(`num-${Math.min(cell.displayVal, 6)}`);
+                }
+              }
+            } else if (cell.flagged) {
+              text.textContent = '🚩';
+            }
+
+            svg.appendChild(text);
+          }
         }
       }
     }
 
-    // 周囲12マスの爆弾数計算（±1誤差含む）
     function calculateNumber(r, c) {
       const neighbors = get12Neighbors(r, c);
       let realCount = 0;
@@ -364,13 +343,12 @@
         if (grid[nr][nc].hasMine) realCount++;
       });
 
-      // 30%の確率で ±1 の誤差が生じる
-      const isLiar = Math.random() < 0.3;
+      const isLiar = Math.random() < 0.3; // 30%の確率で誤差が生じる
       let displayVal = realCount;
 
       if (isLiar) {
         const offset = Math.random() < 0.5 ? -1 : 1;
-        displayVal = Math.max(0, realCount + offset); // 負数防止
+        displayVal = Math.max(0, realCount + offset);
       }
 
       return { displayVal, isLiar };
@@ -383,18 +361,16 @@
 
       cell.revealed = true;
 
-      // 地雷を踏んだ場合
       if (cell.hasMine) {
         triggerGameOver(false);
         return;
       }
 
-      // 表示数計算（誤差付き）
       const res = calculateNumber(r, c);
       cell.displayVal = res.displayVal;
       cell.isLiar = res.isLiar;
 
-      // 0連鎖展開（周囲の安全領域を開ける）
+      // 連鎖開拓（数字0の場合）
       if (res.displayVal === 0) {
         const neighbors = get12Neighbors(r, c);
         neighbors.forEach(([nr, nc]) => {
@@ -414,7 +390,6 @@
       renderBoard();
     }
 
-    // 地雷移動イベント（5秒ごとにランダムな1つの地雷が移動）
     function shiftRandomMine() {
       if (gameOver) return;
 
@@ -431,7 +406,6 @@
       }
 
       if (mines.length > 0 && emptyCells.length > 0) {
-        // ランダムな地雷を消して別の未開封マスへ移動
         const source = mines[Math.floor(Math.random() * mines.length)];
         const target = emptyCells[Math.floor(Math.random() * emptyCells.length)];
 
@@ -439,7 +413,7 @@
         target.hasMine = true;
 
         const msg = document.getElementById('status-msg');
-        msg.textContent = '⚠️ 地雷の位置がテレポートしました…！';
+        msg.textContent = '⚠️ 地雷の位置がどこかへ移動しました…！';
         setTimeout(() => { if (!gameOver) msg.textContent = ''; }, 2000);
       }
     }
@@ -460,19 +434,18 @@
     function triggerGameOver(isWin) {
       gameOver = true;
       clearInterval(shiftInterval);
-      
-      // 全地雷の開示
+
       for (let r = 0; r < ROWS; r++) {
         for (let c = 0; c < COLS; c++) {
           if (grid[r][c].hasMine) grid[r][c].revealed = true;
         }
       }
-      
+
       renderBoard();
       document.getElementById('game-state').textContent = isWin ? 'VICTORY!' : 'GAME OVER';
-      document.getElementById('status-msg').textContent = isWin 
-        ? '🎉 理不尽なカオスを乗り越えた！クリアおめでとう！' 
-        : '💥 爆破された！地雷移動と偽数値に騙されましたね。';
+      document.getElementById('status-msg').textContent = isWin
+        ? '🎉 12マス＆嘘表示を乗り越えた！天才！'
+        : '💥 爆破！地雷移動と偽数値のトラップにハマりました。';
     }
 
     // ゲーム開始
