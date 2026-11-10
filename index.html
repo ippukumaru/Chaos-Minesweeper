@@ -1,1 +1,482 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Triangle Chaos Minesweeper</title>
+  <style>
+    :root {
+      --bg: #0d0f18;
+      --panel: #16192b;
+      --accent: #ff0055;
+      --cyan: #00f0ff;
+      --text: #e2e8f0;
+    }
 
+    * {
+      box-sizing: border-box;
+      user-select: none;
+    }
+
+    body {
+      margin: 0;
+      padding: 20px;
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    h1 {
+      margin: 10px 0 5px;
+      color: var(--cyan);
+      text-shadow: 0 0 10px var(--cyan);
+      font-size: 1.8rem;
+    }
+
+    .info-panel {
+      background: var(--panel);
+      border: 1px solid rgba(0, 240, 255, 0.3);
+      padding: 12px 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      display: flex;
+      gap: 20px;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+    }
+
+    .stat-box {
+      text-align: center;
+    }
+
+    .stat-label {
+      font-size: 0.75rem;
+      color: #94a3b8;
+    }
+
+    .stat-value {
+      font-size: 1.4rem;
+      font-weight: bold;
+      color: #fff;
+    }
+
+    .controls {
+      margin-bottom: 15px;
+      display: flex;
+      gap: 10px;
+    }
+
+    button {
+      background: linear-gradient(135deg, #ff0055, #ff5500);
+      border: none;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 4px;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(255, 0, 85, 0.4);
+      transition: transform 0.1s, filter 0.2s;
+    }
+
+    button:hover {
+      filter: brightness(1.2);
+    }
+
+    button:active {
+      transform: scale(0.95);
+    }
+
+    /* ボードと正三角形グリッドのCSS表現 */
+    #board-container {
+      position: relative;
+      background: var(--panel);
+      padding: 30px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+      overflow: auto;
+      max-width: 100%;
+    }
+
+    #board {
+      position: relative;
+      margin: 0 auto;
+    }
+
+    /* 正三角形セル */
+    .tri-cell {
+      position: absolute;
+      width: 0;
+      height: 0;
+      cursor: pointer;
+      transition: filter 0.15s, transform 0.2s;
+    }
+
+    /* 上向き三角形 */
+    .tri-up {
+      border-left: 26px solid transparent;
+      border-right: 26px solid transparent;
+      border-bottom: 45px solid #2a2e45;
+    }
+
+    /* 下向き三角形 */
+    .tri-down {
+      border-left: 26px solid transparent;
+      border-right: 26px solid transparent;
+      border-top: 45px solid #1f2338;
+    }
+
+    .tri-cell:hover {
+      filter: brightness(1.4);
+    }
+
+    /* セル内のテキスト表示（絶対配置で中央寄せ） */
+    .cell-label {
+      position: absolute;
+      width: 40px;
+      text-align: center;
+      font-weight: bold;
+      font-size: 14px;
+      pointer-events: none;
+      transform: translate(-50%, -50%);
+      left: 0;
+      z-index: 2;
+    }
+
+    .tri-up .cell-label {
+      top: 30px;
+    }
+
+    .tri-down .cell-label {
+      top: -30px;
+    }
+
+    /* 開封済みセルのスタイル */
+    .tri-cell.revealed.tri-up {
+      border-bottom-color: #0f1322 !important;
+    }
+    .tri-cell.revealed.tri-down {
+      border-top-color: #0c0f1d !important;
+    }
+
+    /* 色指定 */
+    .num-0 { color: #4a5568; }
+    .num-1 { color: #6366f1; }
+    .num-2 { color: #10b981; }
+    .num-3 { color: #ef4444; }
+    .num-4 { color: #f59e0b; }
+    .num-5 { color: #ec4899; }
+    .num-6 { color: #8b5cf6; }
+    .num-error { color: #00f0ff; text-shadow: 0 0 5px #00f0ff; } /* 誤差つき表示 */
+    .mine-icon { color: #ff0055; text-shadow: 0 0 8px #ff0055; }
+
+    /* メッセージ領域 */
+    #status-msg {
+      margin-top: 15px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      height: 1.5em;
+      color: var(--accent);
+    }
+
+    .rules {
+      margin-top: 25px;
+      max-width: 600px;
+      background: rgba(255, 255, 255, 0.03);
+      padding: 15px 20px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      line-height: 1.6;
+      color: #cbd5e1;
+    }
+
+    .rules ul {
+      margin: 5px 0 0 20px;
+      padding: 0;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🔺 Triangle Chaos Minesweeper</h1>
+
+  <div class="info-panel">
+    <div class="stat-box">
+      <div class="stat-label">BOMBS</div>
+      <div class="stat-value" id="mine-count">0</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-label">STATUS</div>
+      <div class="stat-value" id="game-state">PLAYING</div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button onclick="initGame()">RESET GAME</button>
+  </div>
+
+  <div id="board-container">
+    <div id="board"></div>
+  </div>
+
+  <div id="status-msg"></div>
+
+  <div class="rules">
+    <strong>🌀 狂気のカオスルール:</strong>
+    <ul>
+      <li><strong>12マス判定</strong>: 正三角形の周囲「辺3マス ＋ 頂点9マス」の計12マスを索敵対象とします。</li>
+      <li><strong>±1誤差表示 (30%の確率)</strong>: 数字が表示される際、30%の確率で実際の爆弾数から ±1 ズレた「偽数値」が表示されます（水色に発光）。</li>
+      <li><strong>動く地雷 (5秒周期)</strong>: 5秒ごとに未開封マスの地雷が1つ、こっそり隣のマスへワープ移動します。</li>
+      <li><strong>操作</strong>: 左クリックで開封 / 右クリックでフラグ。</li>
+    </ul>
+  </div>
+
+  <script>
+    const ROWS = 9;
+    const COLS = 13;
+    const MINE_COUNT = 15;
+    const SIDE = 26; // 半分サイズ
+    const HEIGHT = 45; // 高さ
+
+    let grid = [];
+    let gameOver = false;
+    let shiftInterval = null;
+
+    // 12方向の相対座標算出（正三角形の特殊隣接判定）
+    function get12Neighbors(r, c) {
+      const isUp = (r + c) % 2 === 0;
+      let neighbors = [];
+
+      // 1. 辺共有 (3方向)
+      neighbors.push([r, c - 1]);
+      neighbors.push([r, c + 1]);
+      if (isUp) {
+        neighbors.push([r + 1, c]);
+      } else {
+        neighbors.push([r - 1, c]);
+      }
+
+      // 2. 頂点共有 (9方向)
+      if (isUp) {
+        neighbors.push([r - 1, c - 1], [r - 1, c], [r - 1, c + 1]);
+        neighbors.push([r, c - 2], [r, c + 2]);
+        neighbors.push([r + 1, c - 1], [r + 1, c + 1]);
+        neighbors.push([r + 2, c]);
+      } else {
+        neighbors.push([r + 1, c - 1], [r + 1, c], [r + 1, c + 1]);
+        neighbors.push([r, c - 2], [r, c + 2]);
+        neighbors.push([r - 1, c - 1], [r - 1, c + 1]);
+        neighbors.push([r - 2, c]);
+      }
+
+      // 盤面内に収まるものだけを抽出
+      return neighbors.filter(([nr, nc]) => nr >= 0 && nr < ROWS && nc >= 0 && nc < COLS);
+    }
+
+    function initGame() {
+      gameOver = false;
+      document.getElementById('game-state').textContent = 'PLAYING';
+      document.getElementById('status-msg').textContent = '';
+      if (shiftInterval) clearInterval(shiftInterval);
+
+      // グリッド初期化
+      grid = [];
+      const board = document.getElementById('board');
+      board.innerHTML = '';
+      board.style.width = `${COLS * SIDE + SIDE}px`; board.style.height = `${ROWS * (HEIGHT * 0.85) + 20}px`;
+
+      for (let r = 0; r < ROWS; r++) {
+        grid[r] = [];
+        for (let c = 0; c < COLS; c++) {
+          grid[r][c] = {
+            r, c,
+            isUp: (r + c) % 2 === 0,
+            hasMine: false,
+            revealed: false,
+            flagged: false,
+            displayVal: null,
+            isLiar: false
+          };
+        }
+      }
+
+      // 地雷ランダム配置
+      let placed = 0;
+      while (placed < MINE_COUNT) {
+        let r = Math.floor(Math.random() * ROWS);
+        let c = Math.floor(Math.random() * COLS);
+        if (!grid[r][c].hasMine) {
+          grid[r][c].hasMine = true;
+          placed++;
+        }
+      }
+
+      document.getElementById('mine-count').textContent = MINE_COUNT;
+
+      // 描画
+      renderBoard();
+
+      // 5秒ごとに地雷が裏でカサカサ動くタイマー発動
+      shiftInterval = setInterval(shiftRandomMine, 5000);
+    }
+
+    function renderBoard() {
+      const board = document.getElementById('board');
+      board.innerHTML = '';
+
+      for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+          const cell = grid[r][c];
+          const div = document.createElement('div');
+          
+          div.className = `tri-cell ${cell.isUp ? 'tri-up' : 'tri-down'}`; if (cell.revealed) div.classList.add('revealed');  // 座標計算（正三角形の敷き詰め） const posX = c * SIDE; const posY = r * (HEIGHT * 0.82); div.style.left = `${posX}px`;
+          div.style.top = `${posY}px`;  // ラベル（数字/爆弾/フラグ） const label = document.createElement('span'); label.className = 'cell-label';  if (cell.revealed) { if (cell.hasMine) { label.textContent = '💥'; label.classList.add('mine-icon'); } else { label.textContent = cell.displayVal; if (cell.isLiar) { label.classList.add('num-error'); } else { label.classList.add(`num-${Math.min(cell.displayVal, 6)}`);
+              }
+            }
+          } else if (cell.flagged) {
+            label.textContent = '🚩';
+          }
+
+          div.appendChild(label);
+
+          // イベント登録
+          div.addEventListener('click', () => revealCell(r, c));
+          div.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            toggleFlag(r, c);
+          });
+
+          board.appendChild(div);
+        }
+      }
+    }
+
+    // 周囲12マスの爆弾数計算（±1誤差含む）
+    function calculateNumber(r, c) {
+      const neighbors = get12Neighbors(r, c);
+      let realCount = 0;
+
+      neighbors.forEach(([nr, nc]) => {
+        if (grid[nr][nc].hasMine) realCount++;
+      });
+
+      // 30%の確率で ±1 の誤差が生じる
+      const isLiar = Math.random() < 0.3;
+      let displayVal = realCount;
+
+      if (isLiar) {
+        const offset = Math.random() < 0.5 ? -1 : 1;
+        displayVal = Math.max(0, realCount + offset); // 負数防止
+      }
+
+      return { displayVal, isLiar };
+    }
+
+    function revealCell(r, c) {
+      if (gameOver) return;
+      const cell = grid[r][c];
+      if (cell.revealed || cell.flagged) return;
+
+      cell.revealed = true;
+
+      // 地雷を踏んだ場合
+      if (cell.hasMine) {
+        triggerGameOver(false);
+        return;
+      }
+
+      // 表示数計算（誤差付き）
+      const res = calculateNumber(r, c);
+      cell.displayVal = res.displayVal;
+      cell.isLiar = res.isLiar;
+
+      // 0連鎖展開（周囲の安全領域を開ける）
+      if (res.displayVal === 0) {
+        const neighbors = get12Neighbors(r, c);
+        neighbors.forEach(([nr, nc]) => {
+          if (!grid[nr][nc].revealed) revealCell(nr, nc);
+        });
+      }
+
+      checkWin();
+      renderBoard();
+    }
+
+    function toggleFlag(r, c) {
+      if (gameOver) return;
+      const cell = grid[r][c];
+      if (cell.revealed) return;
+      cell.flagged = !cell.flagged;
+      renderBoard();
+    }
+
+    // 地雷移動イベント（5秒ごとにランダムな1つの地雷が移動）
+    function shiftRandomMine() {
+      if (gameOver) return;
+
+      let mines = [];
+      let emptyCells = [];
+
+      for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+          if (!grid[r][c].revealed) {
+            if (grid[r][c].hasMine) mines.push(grid[r][c]);
+            else emptyCells.push(grid[r][c]);
+          }
+        }
+      }
+
+      if (mines.length > 0 && emptyCells.length > 0) {
+        // ランダムな地雷を消して別の未開封マスへ移動
+        const source = mines[Math.floor(Math.random() * mines.length)];
+        const target = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+
+        source.hasMine = false;
+        target.hasMine = true;
+
+        const msg = document.getElementById('status-msg');
+        msg.textContent = '⚠️ 地雷の位置がテレポートしました…！';
+        setTimeout(() => { if (!gameOver) msg.textContent = ''; }, 2000);
+      }
+    }
+
+    function checkWin() {
+      let won = true;
+      for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+          if (!grid[r][c].hasMine && !grid[r][c].revealed) {
+            won = false;
+            break;
+          }
+        }
+      }
+      if (won) triggerGameOver(true);
+    }
+
+    function triggerGameOver(isWin) {
+      gameOver = true;
+      clearInterval(shiftInterval);
+      
+      // 全地雷の開示
+      for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+          if (grid[r][c].hasMine) grid[r][c].revealed = true;
+        }
+      }
+      
+      renderBoard();
+      document.getElementById('game-state').textContent = isWin ? 'VICTORY!' : 'GAME OVER';
+      document.getElementById('status-msg').textContent = isWin 
+        ? '🎉 理不尽なカオスを乗り越えた！クリアおめでとう！' 
+        : '💥 爆破された！地雷移動と偽数値に騙されましたね。';
+    }
+
+    // ゲーム開始
+    initGame();
+  </script>
+</body>
+</html>
