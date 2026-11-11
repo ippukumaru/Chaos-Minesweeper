@@ -128,7 +128,6 @@
       dominant-baseline: central;
     }
 
-    /* 全ての数字を通常のカラーで統一（嘘つきも本物も区別がつかない） */
     .num-0 { fill: #4a5568; }
     .num-1 { fill: #6366f1; }
     .num-2 { fill: #10b981; }
@@ -243,9 +242,9 @@
   <div class="rules">
     <strong>🌀 カオスルール:</strong>
     <ul>
-      <li><strong>完全な偽装</strong>: 嘘つき数字も本物の数字と全く同じ見た目で表示されます（どれが嘘か見分けがつきません）。</li>
+      <li><strong>完全な偽装</strong>: 嘘つき数字も本物の数字と全く同じ見た目で表示されます。</li>
       <li><strong>12マス近傍</strong>: 周囲の辺3 ＋ 頂点9の計12マスを索敵します。</li>
-      <li><strong>最初の安全保障</strong>: 初回クリック場所とその周囲は必ず安全（地雷なし＆0保証）です。</li>
+      <li><strong>最初の安全保障</strong>: 初回クリック場所は必ず安全（爆弾なし）です。</li>
     </ul>
   </div>
 
@@ -310,9 +309,9 @@
       MINE_COUNT = parseInt(document.getElementById('input-mines').value);
       MAX_ERROR = parseInt(document.getElementById('input-error').value);
 
-      const maxMines = (ROWS * COLS) - 10;
-      if (MINE_COUNT > maxMines) {
-        MINE_COUNT = Math.max(1, maxMines);
+      const totalCells = ROWS * COLS;
+      if (MINE_COUNT >= totalCells) {
+        MINE_COUNT = Math.max(1, totalCells - 1);
         document.getElementById('input-mines').value = MINE_COUNT;
       }
 
@@ -352,16 +351,15 @@
       renderBoard();
     }
 
+    // 初回タップ時に安全地帯（タップしたセル自身）を除外して地雷を正確に配給
     function placeMinesSafely(safeR, safeC) {
-      let safeCells = new Set();
-      safeCells.add(`${safeR},${safeC}`);
-      get12Neighbors(safeR, safeC).forEach(([r, c]) => safeCells.add(`${r},${c}`));
-
       let placed = 0;
       while (placed < MINE_COUNT) {
         let r = Math.floor(Math.random() * ROWS);
         let c = Math.floor(Math.random() * COLS);
-        if (!safeCells.has(`${r},${c}`) && !grid[r][c].hasMine) {
+        
+        // 初回タップ位置以外で、まだ地雷がない場所に配置
+        if ((r !== safeR || c !== safeC) && !grid[r][c].hasMine) {
           grid[r][c].hasMine = true;
           placed++;
         }
@@ -478,7 +476,6 @@
       let displayVal = realCount;
 
       if (MAX_ERROR > 0) {
-        // 一定確率で誤差を付与（見た目の区別は一切なし）
         if (Math.random() < 0.4) {
           const offset = (Math.random() < 0.5 ? 1 : -1) * Math.ceil(Math.random() * MAX_ERROR);
           displayVal = Math.max(0, realCount + offset);
@@ -492,6 +489,7 @@
       const cell = grid[r][c];
       if (cell.revealed || cell.flagged) return;
 
+      // 初回タップ時に安全を確定して地雷配置
       if (firstClick) {
         placeMinesSafely(r, c);
         firstClick = false;
@@ -506,6 +504,7 @@
 
       cell.displayVal = calculateNumber(r, c);
 
+      // 表示数字が0なら連鎖展開
       if (cell.displayVal === 0) {
         const neighbors = get12Neighbors(r, c);
         neighbors.forEach(([nr, nc]) => {
@@ -552,7 +551,7 @@
       document.getElementById('game-state').textContent = isWin ? 'VICTORY!' : 'GAME OVER';
       document.getElementById('status-msg').textContent = isWin
         ? '🎉 嘘まみれの罠を完全看破！クリアおめでとう！'
-        : '💥 爆破されました！嘘の数字に騙されましたね。';
+        : '💥 爆破されました！';
     }
 
     initGame();
