@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Triangle Minesweeper</title>
+<style>
+:root{color-scheme:dark;--bg:#10151d;--panel:#192330;--line:#344456;--text:#edf3f8;--muted:#9aabba;--accent:#65c7a2;--danger:#ff7777}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 50% 0,#1d2b39,var(--bg) 55%);color:var(--text);font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;min-height:100vh;padding:24px}
+main{max-width:1100px;margin:auto}.top{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:18px}h1{font-size:clamp(22px,4vw,34px);letter-spacing:.04em;margin:0}.sub{color:var(--muted);font-size:13px;margin-top:5px}.stats{display:flex;gap:10px;flex-wrap:wrap}.stat,.panel{background:#17222e;border:1px solid var(--line);border-radius:13px;padding:12px 16px}.stat b{font-variant-numeric:tabular-nums;font-size:20px;margin-left:8px}.toolbar{display:flex;gap:9px;flex-wrap:wrap;margin:14px 0}button{border:1px solid #405366;background:#223244;color:var(--text);padding:10px 14px;border-radius:9px;font-weight:650;cursor:pointer}button:hover{border-color:var(--accent);filter:brightness(1.12)}button.primary{background:#23634f;border-color:#3b9d7b}button:disabled{opacity:.45;cursor:not-allowed}.layout{display:grid;grid-template-columns:minmax(0,1fr) 260px;gap:16px;align-items:start}.board-panel{min-width:0;position:relative;overflow:auto;background:rgba(13,19,27,.75);border:1px solid var(--line);border-radius:16px;padding:12px;min-height:300px}.board-wrap{position:relative;min-width:320px}.board{display:block;width:100%;height:auto;touch-action:manipulation}.cell{stroke:#607286;stroke-width:1.15;stroke-linejoin:round;fill:#263747;cursor:pointer;transition:fill .12s}.cell:hover{fill:#38516a}.cell.open{fill:#dce5eb;stroke:#a9bac8;cursor:default}.cell.flagged{fill:#344d5d}.cell.mine{fill:#542e37}.cell.exploded{fill:#9d3543}.celltext{font-size:15px;font-weight:800;text-anchor:middle;dominant-baseline:central;pointer-events:none}.celltext.open-text{fill:#1c2a36}.celltext.covered-text{fill:#f1f5f8}.side{display:grid;gap:12px}.panel h2{font-size:14px;margin:0 0 9px;color:#c7d6e2;letter-spacing:.06em}.panel p{font-size:13px;line-height:1.65;color:var(--muted);margin:0}.legend{display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;color:var(--muted)}.legend span{display:flex;gap:7px;align-items:center}.swatch{width:12px;height:12px;border-radius:3px;background:#dce5eb}.swatch.cover{background:#263747;border:1px solid #607286}.menu{position:fixed;z-index:20;display:none;background:#1b2937;border:1px solid #52677b;border-radius:11px;padding:7px;box-shadow:0 12px 35px #0009;min-width:150px}.menu button{display:block;width:100%;text-align:left;margin:3px 0}.menu .dig{background:#23634f}.menu .flag{background:#3b465b}.status{margin-top:10px;color:var(--muted);font-size:13px;min-height:20px}.settings{display:none;position:fixed;inset:0;z-index:30;background:#0009;align-items:center;justify-content:center;padding:16px}.settings.show{display:flex}.dialog{width:min(440px,100%);background:#192633;border:1px solid #536779;border-radius:16px;padding:20px;box-shadow:0 20px 60px #000a}.dialog h2{margin:0 0 16px}.field{display:grid;grid-template-columns:1fr 130px;align-items:center;gap:12px;margin:12px 0;font-size:14px}.field input{width:100%;background:#0e1720;border:1px solid #465a6c;color:var(--text);padding:9px;border-radius:8px}.hint{font-size:12px;color:var(--muted);line-height:1.6}.dialog-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}.result{font-weight:750;color:var(--accent)}
+@media(max-width:760px){body{padding:14px}.layout{grid-template-columns:1fr}.side{grid-template-columns:1fr 1fr}.board-panel{padding:8px}.field{grid-template-columns:1fr 110px}}
+</style>
+</head>
+<body>
+<main>
+  <header class="top">
+    <div><h1>TRIANGLE <span style="color:var(--accent)">MINESWEEPER</span></h1><div class="sub">正三角形グリッド × 12マス近傍 × Liar Numbers</div></div>
+    <div class="stats">
+      <div class="stat">🚩 FLAGS <b id="flags">0</b></div>
+      <div class="stat">💣 MINES <b id="mineCount">18</b></div>
+      <div class="stat">⏱ TIME <b id="timer">0</b></div>
+    </div>
+  </header>
+  <div class="toolbar">
+    <button class="primary" id="newGame">↻ 新しいゲーム</button>
+    <button id="openSettings">⚙ 設定</button>
+    <button id="helpBtn">遊び方</button>
+  </div>
+  <section class="layout">
+    <div class="board-panel"><div class="board-wrap" id="boardWrap"><svg id="board" class="board" role="img" aria-label="三角形マインスイーパー盤面"></svg></div><div class="status" id="status">マスをタップして開始してください。最初に開くマスは必ず安全です。</div></div>
+    <aside class="side">
+      <div class="panel"><h2>RULES</h2><p>三角形の各マスには、辺を共有する3マスと、頂点だけを共有する9マス、合計12マスの近傍があります。数字を手掛かりに地雷を避けてください。</p></div>
+      <div class="panel"><h2>LIAR NUMBERS</h2><p>表示される数字は、実際の地雷数から設定範囲内でランダムにずれる場合があります。数字の見た目から真偽を判別することはできません。</p></div>
+      <div class="panel"><h2>CONTROLS</h2><div class="legend"><span><i class="swatch cover"></i>未開封</span><span><i class="swatch"></i>開封済み</span><span>🚩 旗</span><span>💣 地雷</span></div><p style="margin-top:9px">タップ：操作メニュー<br>PC右クリック：旗を立てる／外す</p></div>
+    </aside>
+  </section>
+</main>
+<div class="menu" id="cellMenu"><button class="dig" id="digBtn">⛏️ 掘る</button><button class="flag" id="flagBtn">🚩 旗を立てる</button><button id="cancelBtn">キャンセル</button></div>
+<div class="settings" id="settingsModal"><div class="dialog"><h2>ゲーム設定</h2>
+  <label class="field">行数 <input id="rowsInput" type="number" min="3" max="24" value="9"></label>
+  <label class="field">列数 <input id="colsInput" type="number" min="3" max="24" value="9"></label>
+  <label class="field">地雷数 <input id="minesInput" type="number" min="1" max="400" value="18"></label>
+  <label class="field">最大誤差（±） <input id="errorInput" type="number" min="0" max="2" value="1"></label>
+  <p class="hint">行数・列数はそれぞれ3〜24。マス数は「行数×列数×2」です。地雷数はマス数より少なくしてください。設定を適用すると新しい盤面になります。</p>
+  <div class="dialog-actions"><button id="cancelSettings">戻る</button><button class="primary" id="applySettings">適用して開始</button></div>
+</div></div>
+<div class="settings" id="helpModal"><div class="dialog"><h2>遊び方</h2><p class="hint">1. マスをタップし、「掘る」か「旗」を選びます。<br>2. 数字はそのマスの周囲12マスにある地雷数の目安です。ただし、設定した最大誤差の範囲で嘘をつくことがあります。<br>3. 地雷以外のすべてのマスを開けばクリアです。<br>4. 最初に掘ったマスには地雷がありません。</p><div class="dialog-actions"><button class="primary" id="closeHelp">閉じる</button></div></div></div>
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const svg = $('board'), menu = $('cellMenu');
+  const NS = 'http://www.w3.org/2000/svg';
+  let cfg = {rows:9, cols:9, mines:18, error:1};
+  let cells = [], firstMove = true, ended = false, selected = null, startedAt = 0, timerId = null, elapsed = 0;
+  let boardWidth = 0, boardHeight = 0;
+  const dirs = [];
+  const colorFor = n => ({0:'#64788a',1:'#2672c9',2:'#23865b',3:'#d34b4b',4:'#7357bd',5:'#a45c32',6:'#168b91',7:'#26323d',8:'#66717b',9:'#d3a12c',10:'#c05d9c',11:'#8b9b3d',12:'#202a35'}[n] || '#26323d');
+
+  function makeBoard() {
+    stopTimer(); firstMove = true; ended = false; selected = null; elapsed = 0;
+    $('timer').textContent = '0'; $('flags').textContent = '0'; $('mineCount').textContent = cfg.mines;
+    $('status').textContent = 'マスをタップして開始してください。最初に開くマスは必ず安全です。';
+    menu.style.display = 'none'; cells = [];
+    const s = 38, h = s * Math.sqrt(3) / 2, pad = 8;
+    boardWidth = cfg.cols * s + cfg.rows * s/2 + pad*2;
+    boardHeight = cfg.rows * h + pad*2;
+    svg.setAttribute('viewBox', `0 0 ${boardWidth} ${boardHeight}`);
+    svg.setAttribute('width', boardWidth); svg.setAttribute('height', boardHeight);
+    svg.innerHTML = '';
+    const vertexMap = new Map();
+    const key = p => `${p.x.toFixed(3)},${p.y.toFixed(3)}`;
+    const addTri = (r,c,up,pts) => {
+      const id = cells.length;
+      const center = {x:(pts[0].x+pts[1].x+pts[2].x)/3,y:(pts[0].y+pts[1].y+pts[2].y)/3};
+      const cell = {id,r,c,up,pts,center,neighbors:new Set(),mine:false,open:false,flag:false,number:0,shown:0};
+      cells.push(cell);
+      pts.forEach(p => { const k=key(p); if(!vertexMap.has(k)) vertexMap.set(k,[]); vertexMap.get(k).push(id); });
+    };
+    const point = (r,c) => ({x:pad+c*s+r*s/2,y:pad+r*h});
+    for(let r=0;r<cfg.rows;r++) for(let c=0;c<cfg.cols;c++) {
+      const A=point(r,c), B=point(r,c+1), C=point(r+1,c), D=point(r+1,c+1);
+      addTri(r,c,true,[A,B,C]);
+      addTri(r,c,false,[B,D,C]);
+    }
+    vertexMap.forEach(ids => ids.forEach(a => ids.forEach(b => {if(a!==b) cells[a].neighbors.add(b)})));
+    // Interior cells naturally have 12 distinct neighbors: 3 edge-adjacent + 9 vertex-only.
+    cells.forEach(cell => {
+      const poly = document.createElementNS(NS,'polygon');
+      poly.setAttribute('points',cell.pts.map(p=>`${p.x},${p.y}`).join(' '));
+      poly.setAttribute('class','cell'); poly.dataset.id=cell.id;
+      poly.addEventListener('click', e => {e.stopPropagation(); if(!ended) showMenu(cell.id,e.clientX,e.clientY)});
+      poly.addEventListener('contextmenu', e => {e.preventDefault(); if(!ended) toggleFlag(cell.id)});
+      cell.el=poly; svg.appendChild(poly);
+      const label=document.createElementNS(NS,'text'); label.setAttribute('class','celltext'); label.setAttribute('x',cell.center.x); label.setAttribute('y',cell.center.y+1); label.textContent='';
+      cell.label=label; svg.appendChild(label);
+    });
+  }
+  function placeMines(safeId) {
+    const candidates = cells.filter(c=>c.id!==safeId);
+    for(let i=candidates.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[candidates[i],candidates[j]]=[candidates[j],candidates[i]]}
+    candidates.slice(0,cfg.mines).forEach(c=>c.mine=true);
+    cells.forEach(c=>{c.number=[...c.neighbors].filter(id=>cells[id].mine).length; const delta=Math.floor(Math.random()*(2*cfg.error+1))-cfg.error; c.shown=Math.max(0,Math.min(12,c.number+delta));});
+  }
+  function startTimer(){if(timerId)return;startedAt=Date.now()-elapsed*1000;timerId=setInterval(()=>{elapsed=Math.floor((Date.now()-startedAt)/1000);$('timer').textContent=elapsed},250)}
+  function stopTimer(){if(timerId){clearInterval(timerId);timerId=null}}
+  function showMenu(id,x,y){selected=id; const c=cells[id]; $('flagBtn').textContent=c.flag?'🚩 旗を外す':'🚩 旗を立てる'; $('digBtn').disabled=c.open||c.flag; $('flagBtn').disabled=c.open; menu.style.display='block'; const w=menu.offsetWidth||160,h=menu.offsetHeight||120; menu.style.left=Math.min(x,innerWidth-w-8)+'px';menu.style.top=Math.min(y,innerHeight-h-8)+'px';}
+  function hideMenu(){menu.style.display='none';selected=null}
+  function toggleFlag(id){const c=cells[id];if(c.open||ended)return;c.flag=!c.flag;renderCell(c);updateFlags();hideMenu();checkWin()}
+  function dig(id){hideMenu();const c=cells[id];if(c.open||c.flag||ended)return;if(firstMove){placeMines(id);firstMove=false;startTimer()}if(c.mine){c.open=true;ended=true;stopTimer();cells.filter(x=>x.mine).forEach(renderCell);c.el.classList.add('exploded');$('status').innerHTML='<span style="color:var(--danger);font-weight:800">GAME OVER — 地雷を掘ってしまいました。</span>';return;}openCell(id);checkWin()}
+  function openCell(id){const c=cells[id];if(c.open||c.flag||c.mine)return;c.open=true;renderCell(c);}
+  function renderCell(c){c.el.setAttribute('class','cell'+(c.open?' open':'')+(c.flag?' flagged':'' )+(c.mine&&ended?' mine':''));c.label.setAttribute('class','celltext'+(c.open?' open-text':' covered-text'));if(c.open){c.label.textContent=c.mine?'✹':(c.shown===0?'':c.shown);if(c.shown>0)c.label.setAttribute('fill',colorFor(c.shown));}else{c.label.textContent=c.flag?'⚑':'';c.label.removeAttribute('fill')}}
+  function updateFlags(){$('flags').textContent=cells.filter(c=>c.flag).length}
+  function checkWin(){if(ended)return;if(cells.every(c=>c.mine||c.open)){ended=true;stopTimer();$('status').innerHTML='<span class="result">CLEAR — すべての安全なマスを開きました！</span>';}}
+  $('digBtn').addEventListener('click',()=>{if(selected!==null)dig(selected)});
+  $('flagBtn').addEventListener('click',()=>{if(selected!==null)toggleFlag(selected)});
+  $('cancelBtn').addEventListener('click',hideMenu);
+  document.addEventListener('click',e=>{if(!menu.contains(e.target))hideMenu()});
+  $('newGame').addEventListener('click',makeBoard);
+  $('openSettings').addEventListener('click',()=>{$('rowsInput').value=cfg.rows;$('colsInput').value=cfg.cols;$('minesInput').value=cfg.mines;$('errorInput').value=cfg.error;$('settingsModal').classList.add('show')});
+  $('cancelSettings').addEventListener('click',()=>$('settingsModal').classList.remove('show'));
+  $('applySettings').addEventListener('click',()=>{const rows=+$('rowsInput').value,cols=+$('colsInput').value,mines=+$('minesInput').value,error=+$('errorInput').value;const total=rows*cols*2;if(!Number.isInteger(rows)||rows<3||rows>24||!Number.isInteger(cols)||cols<3||cols>24||!Number.isInteger(mines)||mines<1||mines>=total||!Number.isInteger(error)||error<0||error>2){alert('入力値を確認してください。地雷数は盤面の総マス数未満にしてください。');return;}cfg={rows,cols,mines,error};$('settingsModal').classList.remove('show');makeBoard()});
+  $('helpBtn').addEventListener('click',()=>$('helpModal').classList.add('show'));
+  $('closeHelp').addEventListener('click',()=>$('helpModal').classList.remove('show'));
+  window.addEventListener('resize',hideMenu);
+  makeBoard();
+})();
+</script>
+</body>
+</html>
